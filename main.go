@@ -21,7 +21,7 @@ func main() {
 	}
 	host := os.Getenv("HOST")
 	port, _ := strconv.Atoi(os.Getenv("PORT")) // don't forget to convert int since port is int type.
-	user := os.Getenv("USER")
+	user := os.Getenv("USERNAME")
 	dbname := os.Getenv("DB_NAME")
 	pass := os.Getenv("PASSWORD")
 	//TODO: Enable ssl in production
@@ -33,7 +33,7 @@ func main() {
 		panic(errSql)
 	} else {
 		Db = db
-		fmt.Println("Successfully connected to database!")
+		fmt.Println("Successfully connected database!")
 	}
 	router := gin.Default()
 	router.GET("/NextUserId", getNextUserId)
