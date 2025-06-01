@@ -10,6 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+
+	"github.com/pneubeck/NFCommunicator_Backend/models"
 )
 
 var Db *sql.DB
@@ -37,6 +39,7 @@ func main() {
 	}
 	router := gin.Default()
 	router.GET("/NextUserId", getNextUserId)
+	router.POST("/PostMessage", postMessage)
 	router.Run(":8080")
 }
 
@@ -56,4 +59,17 @@ func getNextUserId(context *gin.Context) {
 	}
 	tx.Commit()
 	context.JSON(http.StatusOK, nextUserId)
+}
+
+func postMessage(c *gin.Context) {
+	var newTodo models.Message
+	if err := c.ShouldBindJSON(&newTodo); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+		return
+	}
+
+	// addedTodo := services.AddTodoItem(&newTodo)
+
+	// c.JSON(http.StatusCreated, addedTodo)
+
 }
