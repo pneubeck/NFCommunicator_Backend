@@ -5,13 +5,13 @@ import (
 )
 
 type Message struct {
-	messageId        int
-	creationDate     time.Time
-	lastUpdateDate   time.Time
-	deletionDate     time.Time
-	senderUserId     int
-	recipientUserId  int
-	messageType      int
-	groupChatId      int
-	encryptedMessage []byte
+	MessageId        int
+	CreationDate     time.Time
+	LastUpdateDate   time.Time
+	DeletionDate     time.Time
+	SenderUserId     int
+	RecipientUserId  int
+	MessageType      int
+	GroupChatId      int
+	EncryptedMessage []byte
 }

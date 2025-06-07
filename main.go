@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -61,15 +62,32 @@ func getNextUserId(context *gin.Context) {
 	context.JSON(http.StatusOK, nextUserId)
 }
 
-func postMessage(c *gin.Context) {
+func postMessage(context *gin.Context) {
 	var newTodo models.Message
-	if err := c.ShouldBindJSON(&newTodo); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+	if err := context.ShouldBindJSON(&newTodo); err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
 		return
 	}
-
-	// addedTodo := services.AddTodoItem(&newTodo)
-
-	// c.JSON(http.StatusCreated, addedTodo)
-
+	tx, err := Db.BeginTx(context, nil)
+	if err != nil {
+		context.IndentedJSON(http.StatusInternalServerError, err)
+	}
+	defer tx.Rollback()
+	sqlStatement := `
+	INSERT INTO messages (creationdate, lastupdatedate, senderuserid, recipientuserid, groupchatid, messagetype, messagedata)
+	VALUES ($1, $2, $3, $4, $5, $6, $7)`
+	_, err = tx.Exec(sqlStatement,
+		time.Now(),
+		time.Now(),
+		newTodo.SenderUserId,
+		newTodo.RecipientUserId,
+		newTodo.GroupChatId,
+		newTodo.MessageType,
+		newTodo.EncryptedMessage,
+	)
+	if err != nil {
+		context.IndentedJSON(http.StatusInternalServerError, err)
+	}
+	tx.Commit()
+	context.JSON(http.StatusCreated, nil)
 }
