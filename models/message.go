@@ -13,5 +13,5 @@ type Message struct {
 	RecipientUserId  int
 	MessageType      int
 	GroupChatId      int
-	EncryptedMessage []byte
+	EncryptedMessage string
 }

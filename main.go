@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"os"
@@ -28,6 +29,8 @@ func main() {
 	dbname := os.Getenv("DB_NAME")
 	pass := os.Getenv("PASSWORD")
 	//TODO: Enable ssl in production
+	//TODO: You trusted all proxies, this is NOT safe. We recommend you to set a value.
+	//TODO: ApiKey
 	psqlSetup := fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=disable",
 		host, port, user, dbname, pass)
 	db, errSql := sql.Open("postgres", psqlSetup)
@@ -68,6 +71,11 @@ func postMessage(context *gin.Context) {
 		context.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
 		return
 	}
+	byteData, err := base64.StdEncoding.DecodeString(newTodo.EncryptedMessage)
+	if err != nil {
+		fmt.Println("Error decoding Base64:", err)
+		return
+	}
 	tx, err := Db.BeginTx(context, nil)
 	if err != nil {
 		context.IndentedJSON(http.StatusInternalServerError, err)
@@ -83,7 +91,7 @@ func postMessage(context *gin.Context) {
 		newTodo.RecipientUserId,
 		newTodo.GroupChatId,
 		newTodo.MessageType,
-		newTodo.EncryptedMessage,
+		byteData,
 	)
 	if err != nil {
 		context.IndentedJSON(http.StatusInternalServerError, err)
