@@ -44,6 +44,7 @@ func main() {
 	router := gin.Default()
 	router.GET("/NextUserId", getNextUserId)
 	router.POST("/PostMessage", postMessage)
+	router.GET("/GetMessages", getMessages)
 	router.Run(":8080")
 }
 
@@ -98,4 +99,40 @@ func postMessage(context *gin.Context) {
 	}
 	tx.Commit()
 	context.JSON(http.StatusCreated, nil)
+}
+
+func getMessages(context *gin.Context) {
+	userIdStr := context.Query("userId")
+	userId, err := strconv.Atoi(userIdStr)
+	if err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": "Invalid userId"})
+		return
+	}
+
+	rows, err := Db.Query("SELECT messageid, creationdate, lastupdatedate, senderuserid, recipientuserid, groupchatid, messagetype, messagedata FROM messages WHERE recipientuserid = $1", userId)
+	if err != nil {
+		context.IndentedJSON(http.StatusInternalServerError, err)
+		return
+	}
+	defer rows.Close()
+
+	var messages []models.Message
+
+	for rows.Next() {
+		var msg models.Message
+		var messageData []byte
+		if err := rows.Scan(&msg.MessageId, &msg.CreationDate, &msg.LastUpdateDate, &msg.SenderUserId, &msg.RecipientUserId, &msg.GroupChatId, &msg.MessageType, &messageData); err != nil {
+			context.IndentedJSON(http.StatusInternalServerError, err)
+			return
+		}
+		msg.EncryptedMessage = base64.StdEncoding.EncodeToString(messageData)
+		messages = append(messages, msg)
+	}
+
+	if err = rows.Err(); err != nil {
+		context.IndentedJSON(http.StatusInternalServerError, err)
+		return
+	}
+
+	context.JSON(http.StatusOK, messages)
 }
